@@ -50,7 +50,6 @@ const APP = {
       }
       btn.innerHTML = "Pause";
     } else {
-      // Pause the oscillator
       APP.oscillator.stop();
       APP.isPlaying = false;
       btn.innerHTML = "Play";
