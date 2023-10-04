@@ -118,6 +118,7 @@ select {
 }
 
 .header__content {
+  margin-top: ;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -132,6 +133,47 @@ select {
 body {
     background-color: var(--black);
 }
+
+/* Buttons */
+
+.btn {
+  display: inline-block;
+  padding: .55em 1.5em .5em;
+  background-color: transparent;
+  border: 0.125rem solid var(--bright-emerald);
+  color: var(--white);
+  border-radius: .25em;
+
+/* link necessary styles */
+text-decoration: none;
+
+/* button necessary styles */
+cursor: pointer;
+font-family: inherit;
+font-size: inherit;
+}
+
+
+.btn:hover,
+.btn:focus-visible {
+background-color: #59758d;
+border-color: #59758d;
+}
+
+.btn--secondary {
+    background-color: #36BF7F;
+    border-color: #36BF7F;
+    color: #000;
+}
+
+.btn--secondary:hover,
+.btn:focus-visible {
+    background-color: #75d3a7;
+    border-color: #75d3a7;
+    color: #000;
+}
+
+/* Buttons end */
 
 .h1__text {
     font-size: 2.5rem;
@@ -150,6 +192,19 @@ h2 {
     font-size: 1.5rem;
     font-weight: 400;
     color: var(--grey);
+}
+
+.p__paragraph {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--white);
+}
+
+/* Section */
+
+.p__div {
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
 }
 
 /* Media queries */
