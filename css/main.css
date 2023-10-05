@@ -54,6 +54,7 @@ body {
 a {
   text-decoration-skip-ink: auto;
   color: #36bf7f;
+  list-style-type: none;
 }
 
 a:hover,
@@ -118,7 +119,7 @@ select {
 }
 
 .header__content {
-  margin-top: ;
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -175,11 +176,25 @@ border-color: #59758d;
 
 /* Buttons end */
 
-.h1__text {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--bright-emerald);
-    margin-bottom: 0;
+/* Hamburger Menu */
+.toggle-button {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+display: none;
+flex-direction: column;
+justify-content: space-between;
+width: 30px;
+height: 21px;
+
+}
+
+/* Hamburger Menu End  */
+
+.h1__title {
+    font-size: 3rem;
+    font-weight: 600;
+    color: var(--white);
 }
 
 h2 {
