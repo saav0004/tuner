@@ -1,88 +1,81 @@
 const APP = {
   audioContext: null,
   oscillator: null,
+  gainNode: null,
   isPlaying: false,
   startTime: 0,
-  gainNode: null,
 
   init: () => {
-    APP.createAudioContext();
-    APP.gainNode = APP.audioContext.createGain();
-    APP.gainNode.gain.setValueAtTime(0, APP.audioContext.currentTime);
-
     APP.addListeners();
   },
   addListeners: () => {
-    document.getElementById("btnPlay").addEventListener("click", () => {
-      if (APP.isPlaying) {
-        APP.stopAudio();
-      } else {
-        APP.startAudio();
-      }
-    });
+    document
+      .getElementById("btnPlay")
+      .addEventListener("click", APP.CheckPlayOrPause);
   },
   createAudioContext: () => {
     if (APP.audioContext) {
-      APP.audioContext
-        .close()
-        .then(() => {
-          APP.audioContext = null;
-        })
-        .catch((error) => {
-          console.error("Error closing AudioContext: " + error);
-        });
+      APP.audioContext.close().then(function () {
+        APP.audioContext = null;
+      });
     }
-    APP.audioContext = new AudioContext();
+    APP.audioContext = new (window.AudioContext || window.webkitAudioContext)();
   },
-  startAudio: () => {
-    // Check if the AudioContext is in the suspended state and resume it within a user gesture
-    if (APP.audioContext.state === "suspended") {
-      document.documentElement.addEventListener(
-        "mousedown",
-        () => {
-          APP.audioContext
-            .resume()
-            .then(() => {
-              APP.playSound();
-            })
-            .catch((error) => {
-              console.error("Error resuming audio context: " + error);
-            });
-        },
-        { once: true }
-      );
-    } else {
-      APP.playSound();
-    }
-  },
-  playSound: () => {
-    // Start the oscillator
+  createOscillatorAndGainNode: () => {
     APP.oscillator = APP.audioContext.createOscillator();
+    APP.gainNode = APP.audioContext.createGain();
     APP.oscillator.frequency.setValueAtTime(440, APP.audioContext.currentTime);
+    APP.gainNode.gain.setValueAtTime(0, APP.audioContext.currentTime);
     APP.oscillator.connect(APP.gainNode);
-    APP.oscillator.start();
-
-    // Fade in
-    APP.gainNode.gain.linearRampToValueAtTime(
-      1,
-      APP.audioContext.currentTime + 0.5
-    );
-    APP.isPlaying = true;
+    APP.gainNode.connect(APP.audioContext.destination);
   },
-  stopAudio: () => {
-    if (APP.oscillator) {
-      // Stop and release the oscillator
-      APP.oscillator.stop();
-      APP.oscillator.disconnect();
-      APP.oscillator = null;
-    }
 
-    // Smoothly fade out the gain
-    APP.gainNode.gain.linearRampToValueAtTime(
-      0,
-      APP.audioContext.currentTime + 0.5
+  fadeOutAndClose: () => {
+    const currentTime = APP.audioContext.currentTime;
+    const fadeOutDuration = 0.5; // Adjust the duration as needed
+
+    APP.gainNode.gain.setValueAtTime(1, currentTime);
+    APP.gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      currentTime + fadeOutDuration
     );
-    APP.isPlaying = false;
+
+    // Schedule closing of the AudioContext after the fade-out
+    setTimeout(() => {
+      APP.audioContext.close().then(function () {
+        APP.audioContext = null;
+      });
+    }, fadeOutDuration * 1000); // Convert fadeOutDuration to milliseconds
+  },
+
+  CheckPlayOrPause: () => {
+    const btn = document.getElementById("btnPlay");
+    if (btn.innerHTML === "Play") {
+      if (!APP.isPlaying) {
+        APP.createAudioContext();
+        APP.createOscillatorAndGainNode();
+        APP.gainNode.gain.setValueAtTime(0, APP.startTime);
+
+        setTimeout(() => {
+          APP.gainNode.gain.linearRampToValueAtTime(
+            1,
+            APP.audioContext.currentTime + 0.5
+          );
+        }, 0);
+
+        APP.oscillator.start(0, APP.startTime % 1);
+        APP.isPlaying = true;
+      }
+      btn.innerHTML = "Pause";
+    } else {
+      if (APP.isPlaying) {
+        // Fade out and close the AudioContext
+        APP.fadeOutAndClose();
+        APP.isPlaying = false;
+      }
+
+      btn.innerHTML = "Play";
+    }
   },
 };
 
