@@ -9,6 +9,10 @@ const APP = {
     APP.oscillator = APP.audioContext.createOscillator();
 
     // Set the oscillator frequency to 440Hz
+
+    APP.gainNode = APP.audioContext.createGain();
+    APP.gainNode.gain.setValueAtTime(0, APP.audioContext.currentTime);
+
     APP.oscillator.frequency.setValueAtTime(440, APP.audioContext.currentTime);
 
     // Connect oscillator to speakers
