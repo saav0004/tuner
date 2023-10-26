@@ -4,6 +4,8 @@ const APP = {
   gainNode: null,
   isPlaying: false,
   startTime: 0,
+  fadeOutScheduled: false, // Added a flag to prevent multiple fade-outs
+  cooldown: false, // Added a flag to manage cooldown
 
   init: () => {
     APP.addListeners();
@@ -15,9 +17,7 @@ const APP = {
   },
   createAudioContext: () => {
     if (APP.audioContext) {
-      APP.audioContext.close().then(function () {
-        APP.audioContext = null;
-      });
+      APP.fadeOutAndClose();
     }
     APP.audioContext = new (window.AudioContext || window.webkitAudioContext)();
   },
@@ -31,24 +31,29 @@ const APP = {
   },
 
   fadeOutAndClose: () => {
-    const currentTime = APP.audioContext.currentTime;
-    const fadeOutDuration = 0.5; // Adjust the duration as needed
+    if (APP.audioContext && !APP.fadeOutScheduled) {
+      APP.fadeOutScheduled = true;
 
-    APP.gainNode.gain.setValueAtTime(1, currentTime);
-    APP.gainNode.gain.exponentialRampToValueAtTime(
-      0.001,
-      currentTime + fadeOutDuration
-    );
+      const currentTime = APP.audioContext.currentTime;
+      const fadeOutDuration = 0.5;
 
-    // Schedule closing of the AudioContext after the fade-out
-    setTimeout(() => {
-      APP.audioContext.close().then(function () {
-        APP.audioContext = null;
-      });
-    }, fadeOutDuration * 1000); // Convert fadeOutDuration to milliseconds
+      APP.gainNode.gain.setValueAtTime(1, currentTime);
+      APP.gainNode.gain.exponentialRampToValueAtTime(
+        0.001,
+        currentTime + fadeOutDuration
+      );
+
+      setTimeout(() => {
+        APP.audioContext.close().then(function () {
+          APP.audioContext = null;
+          APP.fadeOutScheduled = false; // Reset the flag
+        });
+      }, fadeOutDuration * 1000);
+    }
   },
 
   CheckPlayOrPause: () => {
+    if (APP.cooldown) return; // Exit if cooldown is active
     const btn = document.getElementById("btnPlay");
     if (btn.innerHTML === "Play") {
       if (!APP.isPlaying) {
@@ -67,6 +72,12 @@ const APP = {
         APP.isPlaying = true;
       }
       btn.innerHTML = "Pause";
+
+      // Set a cooldown period (e.g., 1 second) during which button clicks are ignored
+      APP.cooldown = true;
+      setTimeout(() => {
+        APP.cooldown = false;
+      }, 1000); // Adjust the cooldown duration as needed
     } else {
       if (APP.isPlaying) {
         // Fade out and close the AudioContext
