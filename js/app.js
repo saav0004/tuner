@@ -1,25 +1,11 @@
 const APP = {
   audioContext: null,
   oscillator: null,
+  gainNode: null,
   isPlaying: false,
   startTime: 0,
-  gainNode: 0,
 
   init: () => {
-    APP.createAudioContext();
-    APP.oscillator = APP.audioContext.createOscillator();
-
-    // Create a gainNode instance
-    APP.gainNode = APP.audioContext.createGain();
-    APP.gainNode.gain.setValueAtTime(0, APP.audioContext.currentTime);
-
-    // Set the oscillator frequency to 440Hz
-    APP.oscillator.frequency.setValueAtTime(440, APP.audioContext.currentTime);
-
-    // Connect oscillator to speakers
-    APP.oscillator.connect(APP.gainNode);
-    APP.gainNode.connect(APP.audioContext.destination);
-
     APP.addListeners();
   },
   addListeners: () => {
@@ -29,26 +15,45 @@ const APP = {
   },
   createAudioContext: () => {
     if (APP.audioContext) {
-      // Close and nullify the existing AudioContext if it exists
-      APP.audioContext.close();
-      APP.audioContext = null;
+      APP.audioContext.close().then(function () {
+        APP.audioContext = null;
+      });
     }
-    // Create a new AudioContext
-    APP.audioContext = new AudioContext();
+    APP.audioContext = new (window.AudioContext || window.webkitAudioContext)();
   },
-  createOscillator: () => {
-    // Create a new oscillator instance
-    const oscillator = APP.audioContext.createOscillator();
-    oscillator.frequency.setValueAtTime(440, APP.audioContext.currentTime);
-    oscillator.connect(APP.gainNode);
-    return oscillator;
+  createOscillatorAndGainNode: () => {
+    APP.oscillator = APP.audioContext.createOscillator();
+    APP.gainNode = APP.audioContext.createGain();
+    APP.oscillator.frequency.setValueAtTime(440, APP.audioContext.currentTime);
+    APP.gainNode.gain.setValueAtTime(0, APP.audioContext.currentTime);
+    APP.oscillator.connect(APP.gainNode);
+    APP.gainNode.connect(APP.audioContext.destination);
+  },
+
+  fadeOutAndClose: () => {
+    const currentTime = APP.audioContext.currentTime;
+    const fadeOutDuration = 0.5; // Adjust the duration as needed
+
+    APP.gainNode.gain.setValueAtTime(1, currentTime);
+    APP.gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      currentTime + fadeOutDuration
+    );
+
+    // Schedule closing of the AudioContext after the fade-out
+    setTimeout(() => {
+      APP.audioContext.close().then(function () {
+        APP.audioContext = null;
+      });
+    }, fadeOutDuration * 1000); // Convert fadeOutDuration to milliseconds
   },
 
   CheckPlayOrPause: () => {
     const btn = document.getElementById("btnPlay");
     if (btn.innerHTML === "Play") {
       if (!APP.isPlaying) {
-        // Start the oscillator
+        APP.createAudioContext();
+        APP.createOscillatorAndGainNode();
         APP.gainNode.gain.setValueAtTime(0, APP.startTime);
 
         setTimeout(() => {
@@ -58,23 +63,17 @@ const APP = {
           );
         }, 0);
 
-        // APP.gainNode.gain.linearRampToValueAtTime(1, APP.startTime + 0.5);
-
-        APP.oscillator = APP.createOscillator();
         APP.oscillator.start(0, APP.startTime % 1);
         APP.isPlaying = true;
       }
       btn.innerHTML = "Pause";
     } else {
-      APP.gainNode.gain.setValueAtTime(1, APP.audioContext.currentTime);
-      APP.gainNode.gain.linearRampToValueAtTime(
-        0,
-        APP.audioContext.currentTime + 0.5
-      );
+      if (APP.isPlaying) {
+        // Fade out and close the AudioContext
+        APP.fadeOutAndClose();
+        APP.isPlaying = false;
+      }
 
-      // Stop the oscillator after the fade-out is complete
-      APP.oscillator.stop(APP.audioContext.currentTime + 0.5);
-      APP.isPlaying = false;
       btn.innerHTML = "Play";
     }
   },
