@@ -35,7 +35,7 @@ const APP = {
       APP.fadeOutScheduled = true;
 
       const currentTime = APP.audioContext.currentTime;
-      const fadeOutDuration = 0.5;
+      const fadeOutDuration = 0.5; // Adjust the duration as needed
 
       APP.gainNode.gain.setValueAtTime(1, currentTime);
       APP.gainNode.gain.exponentialRampToValueAtTime(
@@ -48,7 +48,7 @@ const APP = {
           APP.audioContext = null;
           APP.fadeOutScheduled = false; // Reset the flag
         });
-      }, fadeOutDuration * 1000);
+      }, fadeOutDuration * 1000); // Convert fadeOutDuration to milliseconds
     }
   },
 
